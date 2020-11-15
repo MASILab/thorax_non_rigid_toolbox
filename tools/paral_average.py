@@ -4,7 +4,8 @@ import nibabel as nib
 from data_io import DataFolder, ScanWrapper
 import os
 from paral import AbstractParallelRoutine
-from utils import get_logger
+from utils import get_logger, mkdir_p
+
 
 logger = get_logger('Average')
 
@@ -139,6 +140,8 @@ def main():
     parser.add_argument('--file-list-txt', type=str)
     parser.add_argument('--num-process', type=int, default=10)
     args = parser.parse_args()
+
+    mkdir_p(args.out_folder)
 
     in_folder_obj = DataFolder(args.in_folder, args.file_list_txt)
     exe_obj = AverageValidRegion(in_folder_obj, args.num_process)

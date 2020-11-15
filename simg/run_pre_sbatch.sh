@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # SINGULARITY_PATH=/nfs/masi/xuk9/singularity/thorax_combine/conda_base
-SINGULARITY_PATH=/scratch/xuk9/singularity/thorax_combine_20201112.viselab.img
+SINGULARITY_PATH=/scratch/xuk9/singularity/thorax_combine_20201022.img
 IN_DATA_FOLDER=/scratch/xuk9/nifti/SPORE/data_flat
 #PROJ_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PROJ_ROOT=/scratch/xuk9/nifti/SPORE/reg_pipeline
 FILE_LIST=${PROJ_ROOT}/data/file_list
-BATCH_SIZE=1
+BATCH_SIZE=3
 
 set -o xtrace
 singularity exec \
@@ -23,6 +23,10 @@ mkdir -p ${LOG_FOLDER}
 NUM_SCANS=$(cat ${FILE_LIST} | wc -l )
 N_BATCH=$((${NUM_SCANS}/${BATCH_SIZE}))
 ARRAY_UPPER_BOUND=$((${N_BATCH}-1))
+
+BIN_EXTERNAL=/home/xuk9/src/Thorax_non_rigid_combine/simg/bin
+SRC_AFFINE=/home/xuk9/src/Thorax_affine_combine
+SRC_NON_RIGID=/home/xuk9/src/Thorax_non_rigid_combine
 
 > ${SBATCH_JOB_SH}
 echo "#!/bin/bash
@@ -53,7 +57,7 @@ do
   SCAN_NAME=\${cmds[\$i]}
 
   set -o xtrace
-  singularity exec --contain -B ${IN_DATA_FOLDER}:/data_root -B ${PROJ_ROOT}:/proj_root ${SINGULARITY_PATH} run_combine_pipeline \${SCAN_NAME}
+  singularity exec --contain -B ${BIN_EXTERNAL}:/bin_external -B ${IN_DATA_FOLDER}:/data_root -B ${PROJ_ROOT}:/proj_root -B ${SRC_AFFINE}:/src/Thorax_affine_combine -B ${SRC_NON_RIGID}:/src/Thorax_non_rigid_combine ${SINGULARITY_PATH} run_combine_pipeline.sh \${SCAN_NAME}
   set +o xtrace
 done
 

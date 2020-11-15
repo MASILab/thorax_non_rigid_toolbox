@@ -259,6 +259,94 @@ run_process_one_scan () {
   run_registration_pipeline
 }
 
+recreate_trans_field () {
+    local scan_name="$1"
+    local scan_name_no_ext="${scan_name%.*}"
+
+    local REF_MASK_IMG=${REFERENCE_FOLDER}/valid_region_mask.nii.gz
+
+    local scan_root_folder=${OUTPUT_ROOT_FOLDER}/${scan_name_no_ext}
+    local OUTPUT_JAC_FOLDER=${scan_root_folder}/jac
+    local OUTPUT_HIGH_RES_FOLDER=${scan_root_folder}/output_high_res
+    local low_res_combined_trans=${OUTPUT_JAC_FOLDER}/trans_combine_low_res.nii.gz
+    local high_res_trans=${OUTPUT_HIGH_RES_FOLDER}/output/trans.nii.gz
+
+    mkdir -p ${OUTPUT_JAC_FOLDER}
+    mkdir -p ${OUTPUT_HIGH_RES_FOLDER}
+
+    local trans_folder=${OUTPUT_INTERP_FOLDER}/trans
+
+    local trans_low_res_1=${trans_folder}/${scan_name}.low_res_1.dat
+    local trans_low_res_2=${trans_folder}/${scan_name}.low_res_2.dat
+    local trans_low_res_3=${trans_folder}/${scan_name}.low_res_3.dat
+    local trans_high_res=${trans_folder}/${scan_name}.high_res.dat
+
+    set -o xtrace
+    # Create low res mask
+    low_res_mask=${OUTPUT_JAC_FOLDER}/low_res_mask.nii.gz
+    ${C3D_ROOT}/c3d -int 0 \
+        ${REF_MASK_IMG} -resample-mm 2x2x2mm \
+        -o ${low_res_mask}
+
+    # Low res 1
+    ${corrField_ROOT}/convertWarpNiftyreg \
+        -R ${low_res_mask} \
+        -O ${trans_low_res_1} \
+        -T ${OUTPUT_JAC_FOLDER}/trans_low_res_1.nii.gz
+
+    # Low res 2
+    ${corrField_ROOT}/convertWarpNiftyreg \
+        -R ${low_res_mask} \
+        -O ${trans_low_res_2} \
+        -T ${OUTPUT_JAC_FOLDER}/trans_low_res_2.nii.gz
+
+    # Low res 3
+    ${corrField_ROOT}/convertWarpNiftyreg \
+        -R ${low_res_mask} \
+        -O ${trans_low_res_3} \
+        -T ${OUTPUT_JAC_FOLDER}/trans_low_res_3.nii.gz
+
+    # High res
+#    ${corrField_ROOT}/convertWarpNiftyreg \
+#        -R ${REF_MASK_IMG} \
+#        -O ${trans_high_res} \
+#        -T ${OUTPUT_JAC_FOLDER}/trans_high_res.nii.gz
+
+    # Combine fields
+    ${NIFYREG_ROOT}/reg_transform \
+        -comp \
+        ${OUTPUT_JAC_FOLDER}/trans_low_res_1.nii.gz \
+        ${OUTPUT_JAC_FOLDER}/trans_low_res_2.nii.gz \
+        ${OUTPUT_JAC_FOLDER}/trans_combine_1_2.nii.gz
+
+    ${NIFYREG_ROOT}/reg_transform \
+        -comp \
+        ${OUTPUT_JAC_FOLDER}/trans_combine_1_2.nii.gz \
+        ${OUTPUT_JAC_FOLDER}/trans_low_res_3.nii.gz \
+        ${OUTPUT_JAC_FOLDER}/trans_combine_low_res.nii.gz
+
+    ${NIFYREG_ROOT}/reg_jacobian \
+        -trans ${OUTPUT_JAC_FOLDER}/trans_combine_low_res.nii.gz \
+        -ref ${low_res_mask} \
+        -jacM ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_jacM.nii.gz
+
+    ${PYTHON_ENV} ${SRC_ROOT}/tools/get_jacobian_deformable_index.py \
+        --in-trans-img ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_jacM.nii.gz \
+        --in-ref-img ${low_res_mask} \
+        --out-d-idx-img ${OUTPUT_JAC_FOLDER}/low_res_d_index.nii.gz
+
+    mkdir -p ${OUTPUT_INTERP_FOLDER}/d_index
+    cp ${OUTPUT_JAC_FOLDER}/low_res_d_index.nii.gz ${OUTPUT_INTERP_FOLDER}/d_index/${scan_name}
+
+#    ${NIFYREG_ROOT}/reg_transform \
+#        -comp \
+#        ${OUTPUT_JAC_FOLDER}/trans_combine_low_res.nii.gz \
+#        ${OUTPUT_JAC_FOLDER}/trans_high_res.nii.gz \
+#        ${OUTPUT_JAC_FOLDER}/trans_combine.nii.gz
+
+    set +o xtrace
+}
+
 run_interp_scan () {
   local scan_name="$1"
   local scan_name_no_ext="${scan_name%.*}"
@@ -267,34 +355,50 @@ run_interp_scan () {
 
   local scan_root_folder=${OUTPUT_ROOT_FOLDER}/${scan_name_no_ext}
   local OUTPUT_JAC_FOLDER=${scan_root_folder}/jac
-  local OUTPUT_HIGH_RES_FOLDER=${scan_root_folder}/output_high_res
   local low_res_combined_trans=${OUTPUT_JAC_FOLDER}/trans_combine_low_res.nii.gz
-  local high_res_trans=${OUTPUT_HIGH_RES_FOLDER}/output/trans.nii.gz
+  local high_res_trans=${OUTPUT_JAC_FOLDER}/trans_high_res.nii.gz
 
   run_interp_scan_flag () {
     local mask_flag="$1"
+    local interp_order="$2"
+    local pad_value="$3"
 
     local in_mask=${MASK_FOLDER}/${mask_flag}/${scan_name}
     local out_mask_folder=${OUTPUT_INTERP_FOLDER}/${mask_flag}
     mkdir -p ${out_mask_folder}
     local out_mask=${out_mask_folder}/${scan_name}
 
+#    set -o xtrace
+#    ${NIFYREG_ROOT}/reg_resample \
+#      -inter ${interp_order} -pad ${pad_value} \
+#      -ref ${REF_MASK_IMG} \
+#      -flo ${in_mask} \
+#      -trans ${low_res_combined_trans} \
+#      -res ${out_mask}_low_res_trans.nii.gz
+
     set -o xtrace
+    low_res_mask=${OUTPUT_JAC_FOLDER}/low_res_mask.nii.gz
     ${NIFYREG_ROOT}/reg_resample \
-      -inter 0 -pad 0 \
-      -ref ${REF_MASK_IMG} \
+      -inter ${interp_order} -pad ${pad_value} \
+      -ref ${low_res_mask} \
       -flo ${in_mask} \
-      -trans ${low_res_combined_trans} \
-      -res ${out_mask}_low_res_trans.nii.gz
+      -res ${in_mask}_low_res.nii.gz
 
     ${NIFYREG_ROOT}/reg_resample \
-      -inter 0 -pad 0 \
-      -ref ${REF_MASK_IMG} \
-      -flo ${out_mask}_low_res_trans.nii.gz \
-      -trans ${high_res_trans} \
+      -inter ${interp_order} -pad ${pad_value} \
+      -ref ${low_res_mask} \
+      -flo ${in_mask}_low_res.nii.gz \
+      -trans ${low_res_combined_trans} \
       -res ${out_mask}
 
-    rm ${out_mask}_low_res_trans.nii.gz
+#    ${NIFYREG_ROOT}/reg_resample \
+#      -inter 0 -pad 0 \
+#      -ref ${REF_MASK_IMG} \
+#      -flo ${out_mask}_low_res_trans.nii.gz \
+#      -trans ${high_res_trans} \
+#      -res ${out_mask}
+
+#    rm ${out_mask}_low_res_trans.nii.gz
     set +o xtrace
   }
 
@@ -308,9 +412,10 @@ run_interp_scan () {
     set +o xtrace
   }
 
-  run_interp_scan_flag lung_mask
-  run_interp_scan_flag body_mask
-  get_effective_region
+#  run_interp_scan_flag lung_mask
+#  run_interp_scan_flag body_mask
+#  get_effective_region
+#    run_interp_scan_flag cam_heatmap 3 0
 }
 
 rm_temp_files () {

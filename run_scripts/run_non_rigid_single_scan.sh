@@ -12,7 +12,8 @@ scan_name_base="$(basename -- $SCAN_NAME)"
 
 start=`date +%s`
 
-run_process_one_scan ${scan_name_base}
+#run_process_one_scan ${scan_name_base}
+recreate_trans_field ${scan_name_base}
 run_interp_scan ${scan_name_base}
 
 if [ "$IF_REMOVE_TEMP_FILES" = true ]; then
