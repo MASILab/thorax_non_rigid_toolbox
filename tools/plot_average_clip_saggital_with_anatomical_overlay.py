@@ -86,7 +86,8 @@ class ClipPlotSeriesWithBack:
             masked_img_data,
             masked_back_data,
             'axial',
-            out_png_folder
+            out_png_folder,
+            1
         )
 
         self._plot_view(
@@ -95,7 +96,8 @@ class ClipPlotSeriesWithBack:
             masked_img_data,
             masked_back_data,
             'sagittal',
-            out_png_folder
+            out_png_folder,
+            5.23438 / 2.28335
         )
 
         self._plot_view(
@@ -104,7 +106,8 @@ class ClipPlotSeriesWithBack:
             masked_img_data,
             masked_back_data,
             'coronal',
-            out_png_folder
+            out_png_folder,
+            5.23438 / 2.17388
         )
 
     def _plot_view(self,
@@ -113,7 +116,9 @@ class ClipPlotSeriesWithBack:
                    in_img_data,
                    in_back_data,
                    view_flag,
-                   out_png_folder):
+                   out_png_folder,
+                   unit_ratio
+                   ):
         for clip_idx in range(num_clip):
             clip_off_set = (clip_idx - 2) * step_clip
             img_slice = self._clip_image(in_img_data, view_flag, clip_off_set)
@@ -125,7 +130,7 @@ class ClipPlotSeriesWithBack:
             im_back = ax.imshow(
                 back_slice,
                 interpolation='none',
-                cmap='Blues',
+                cmap='gray',
                 norm=colors.Normalize(vmin=self._vmin_back, vmax=self._vmax_back),
                 alpha=0.7
             )
@@ -133,14 +138,16 @@ class ClipPlotSeriesWithBack:
             im = ax.imshow(
                 img_slice,
                 interpolation='none',
-                cmap='Reds',
+                cmap='jet',
                 norm=colors.Normalize(vmin=self._vmin, vmax=self._vmax),
                 alpha=0.5
             )
 
+            ax.set_aspect(unit_ratio)
+
             if self._unit_label is not None:
                 divider = make_axes_locatable(ax)
-                cax = divider.append_axes("right", size="5%", pad=0.05)
+                cax = divider.append_axes("right", size="5%", pad=0.05/unit_ratio)
 
                 cb = plt.colorbar(im, cax=cax)
                 cb.set_label(self._unit_label)
@@ -167,20 +174,76 @@ class ClipPlotSeriesWithBack:
 
         return clip
 
+
+# in_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_obese/average.nii.gz'
+# in_back_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/non_rigid_ref.nii.gz'
+# out_png_folder = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_obese/average_png'
+# vmin = 0
+# vmax = 1
+# vmin_back = -1000
+# vmax_back = 600
+# unit_label = 'Valid probability'
+
+# in_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_obese/variance.nii.gz'
+# in_back_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/non_rigid_ref.nii.gz'
+# out_png_folder = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_obese/variance_png'
+# vmin = -2
+# vmax = -0.5
+# vmin_back = -1000
+# vmax_back = 600
+# unit_label = 'Log variance of valid probability'
+
+# in_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_normal/average.nii.gz'
+# in_back_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/non_rigid_ref.nii.gz'
+# out_png_folder = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_normal/average_png'
+# vmin = 0
+# vmax = 1
+# vmin_back = -1000
+# vmax_back = 600
+# unit_label = 'Valid probability'
+#
+# in_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_normal/variance.nii.gz'
+# in_back_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/non_rigid_ref.nii.gz'
+# out_png_folder = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_normal/variance_png'
+# vmin = -2
+# vmax = -0.5
+# vmin_back = -1000
+# vmax_back = 600
+# unit_label = 'Log variance of valid probability'
+
+# in_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_obese/average.nii.gz'
+# in_back_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/non_rigid_ref.nii.gz'
+# out_png_folder = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_obese/average_png'
+# vmin = 0
+# vmax = 1
+# vmin_back = -1000
+# vmax_back = 600
+# unit_label = 'Valid probability'
+
+in_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_obese/average.nii.gz'
+in_back_img = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/non_rigid_ref.nii.gz'
+out_png_folder = '/nfs/masi/xuk9/SPORE/CAC_class/data/atlas/valid_region/s2_atlas_ori_valid_region_average_obese/average_png'
+vmin = 0
+vmax = 1
+vmin_back = -1000
+vmax_back = 600
+unit_label = 'Valid probability'
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--in-img', type=str)
+    parser.add_argument('--in-img', type=str, default=in_img)
     parser.add_argument('--in-mask', type=str, default=None)
-    parser.add_argument('--in-back-img', type=str)
-    parser.add_argument('--step-axial', type=int, default=50)
-    parser.add_argument('--step-sagittal', type=int, default=75)
-    parser.add_argument('--step-coronal', type=int, default=30)
-    parser.add_argument('--out-png-folder', type=str)
-    parser.add_argument('--vmin', type=float, default=-1000)
-    parser.add_argument('--vmax', type=float, default=500)
-    parser.add_argument('--vmin-back', type=float, default=-1000)
-    parser.add_argument('--vmax-back', type=float, default=500)
-    parser.add_argument('--unit-label', type=str, default=None)
+    parser.add_argument('--in-back-img', type=str, default=in_back_img)
+    parser.add_argument('--step-axial', type=int, default=10)
+    parser.add_argument('--step-sagittal', type=int, default=35)
+    parser.add_argument('--step-coronal', type=int, default=15)
+    parser.add_argument('--out-png-folder', type=str, default=out_png_folder)
+    parser.add_argument('--vmin', type=float, default=vmin)
+    parser.add_argument('--vmax', type=float, default=vmax)
+    parser.add_argument('--vmin-back', type=float, default=vmin_back)
+    parser.add_argument('--vmax-back', type=float, default=vmax_back)
+    parser.add_argument('--unit-label', type=str, default=unit_label)
     parser.add_argument('--num-clip', type=int, default=3)
     args = parser.parse_args()
 

@@ -132,7 +132,6 @@ class AverageValidRegion(AbstractParallelRoutine):
         return result_list
 
 
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--in-folder', type=str)

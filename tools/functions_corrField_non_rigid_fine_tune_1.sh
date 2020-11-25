@@ -109,7 +109,7 @@ run_process_one_scan () {
       set +o xtrace
 
       set -o xtrace
-      cp ${OUTPUT_JAC_FO LDER}/jac.nii.gz \
+      cp ${OUTPUT_JAC_FOLDER}/jac.nii.gz \
         ${OUTPUT_JAC_DET_FOLDER}/${scan_name}
       set +o xtrace
     }
@@ -325,18 +325,58 @@ recreate_trans_field () {
         ${OUTPUT_JAC_FOLDER}/trans_low_res_3.nii.gz \
         ${OUTPUT_JAC_FOLDER}/trans_combine_low_res.nii.gz
 
+    # Combine with affine matrix
+    local omat_txt=${MASK_FOLDER}/../omat/"${scan_name_no_ext%.*}".txt
+    ${NIFYREG_ROOT}/reg_transform \
+        -comp \
+        ${OUTPUT_JAC_FOLDER}/trans_combine_low_res.nii.gz \
+        ${omat_txt} \
+        ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_add_affine.nii.gz \
+        -ref \
+        ${low_res_mask}
+
+    # Get the Jacobian matrix
     ${NIFYREG_ROOT}/reg_jacobian \
-        -trans ${OUTPUT_JAC_FOLDER}/trans_combine_low_res.nii.gz \
+        -trans ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_add_affine.nii.gz \
         -ref ${low_res_mask} \
-        -jacM ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_jacM.nii.gz
+        -jacM ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_add_affine_jacM.nii.gz
 
-    ${PYTHON_ENV} ${SRC_ROOT}/tools/get_jacobian_deformable_index.py \
-        --in-trans-img ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_jacM.nii.gz \
+    ${NIFYREG_ROOT}/reg_jacobian \
+        -trans ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_add_affine.nii.gz \
+        -ref ${low_res_mask} \
+        -jacL ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_add_affine_jacL.nii.gz
+
+    # Get the 9 matrix elements
+    ${PYTHON_ENV} ${SRC_ROOT}/tools/get_jacobian_elements_all.py \
+        --in-trans-img ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_add_affine_jacM.nii.gz \
         --in-ref-img ${low_res_mask} \
-        --out-d-idx-img ${OUTPUT_JAC_FOLDER}/low_res_d_index.nii.gz
+        --out-jac-elem-prefix ${OUTPUT_JAC_FOLDER}/jac_elem \
+        --c3d-path ${C3D_ROOT}/c3d
 
-    mkdir -p ${OUTPUT_INTERP_FOLDER}/d_index
-    cp ${OUTPUT_JAC_FOLDER}/low_res_d_index.nii.gz ${OUTPUT_INTERP_FOLDER}/d_index/${scan_name}
+    mkdir -p ${OUTPUT_INTERP_FOLDER}/jac_elem
+    mkdir -p ${OUTPUT_INTERP_FOLDER}/jac_elem_clip_95
+    mkdir -p ${OUTPUT_INTERP_FOLDER}/jacL_add_affine
+    scan_name_no_ext_no_ext="${scan_name_no_ext%.*}"
+
+    for (( idx_elem=0; idx_elem<9; idx_elem++ ))
+    do
+        cp ${OUTPUT_JAC_FOLDER}/jac_elem_${idx_elem}_raw.nii.gz ${OUTPUT_INTERP_FOLDER}/jac_elem/${scan_name_no_ext_no_ext}_${idx_elem}.nii.gz
+        cp ${OUTPUT_JAC_FOLDER}/jac_elem_${idx_elem}_clip_95.nii.gz ${OUTPUT_INTERP_FOLDER}/jac_elem_clip_95/${scan_name_no_ext_no_ext}_${idx_elem}.nii.gz
+    done
+    cp ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_add_affine_jacL.nii.gz ${OUTPUT_INTERP_FOLDER}/jacL_add_affine/${scan_name}
+
+#    ${NIFYREG_ROOT}/reg_jacobian \
+#        -trans ${OUTPUT_JAC_FOLDER}/trans_combine_low_res.nii.gz \
+#        -ref ${low_res_mask} \
+#        -jacM ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_jacM.nii.gz
+#
+#    ${PYTHON_ENV} ${SRC_ROOT}/tools/get_jacobian_deformable_index.py \
+#        --in-trans-img ${OUTPUT_JAC_FOLDER}/trans_combine_low_res_jacM.nii.gz \
+#        --in-ref-img ${low_res_mask} \
+#        --out-d-idx-img ${OUTPUT_JAC_FOLDER}/low_res_d_index.nii.gz
+
+#    mkdir -p ${OUTPUT_INTERP_FOLDER}/d_index
+#    cp ${OUTPUT_JAC_FOLDER}/low_res_d_index.nii.gz ${OUTPUT_INTERP_FOLDER}/d_index/${scan_name}
 
 #    ${NIFYREG_ROOT}/reg_transform \
 #        -comp \

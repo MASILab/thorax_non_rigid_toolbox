@@ -6,7 +6,7 @@ IN_DATA_FOLDER=/scratch/xuk9/nifti/SPORE/data_flat
 #PROJ_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PROJ_ROOT=/scratch/xuk9/nifti/SPORE/reg_pipeline
 FILE_LIST=${PROJ_ROOT}/data/file_list
-BATCH_SIZE=3
+BATCH_SIZE=1
 
 set -o xtrace
 singularity exec \
