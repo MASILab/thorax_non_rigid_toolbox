@@ -3,6 +3,7 @@ from data_io import DataFolder, ScanWrapper
 from utils import get_logger
 from paral import AbstractParallelRoutine
 import numpy as np
+from collections import Counter
 
 
 logger = get_logger('Apply Mask')
@@ -32,11 +33,17 @@ class ApplyMask(AbstractParallelRoutine):
         out_path = self._out_folder_obj.get_file_path(idx)
 
         in_img_data = in_img.get_data()
+        print(in_mask.get_path())
         in_mask_data = in_mask.get_data()
 
+        print(self._ambient_val)
         new_img_data = np.full(in_img.get_shape(), self._ambient_val)
 
+        # print(in_mask_data)
+        # print(Counter(in_mask_data))
+
         np.copyto(new_img_data, in_img_data, where=in_mask_data == 0)
+        print(np.count_nonzero(np.isnan(new_img_data)))
 
         in_img.save_scan_same_space(out_path, new_img_data)
 

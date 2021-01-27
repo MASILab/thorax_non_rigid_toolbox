@@ -125,7 +125,6 @@ class ScanWrapper:
 
         return slice_x, slice_y, slice_z
 
-
     def save_scan_same_space(self, file_path, img_data):
         logger.info(f'Saving image to {file_path}')
         img_obj = nib.Nifti1Image(img_data,
