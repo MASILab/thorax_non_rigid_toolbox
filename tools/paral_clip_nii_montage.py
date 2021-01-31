@@ -185,7 +185,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--in-folder', type=str, help='Folder of NIFTI files')
     parser.add_argument('--out-folder', type=str, help='Output folder')
-    parser.add_argument('--file-list-txt', type=str, help='List of filename in plain txt')
+    parser.add_argument('--file-list-txt', type=str, help='List of filename in plain txt (ls ${in_folder} > file_list)')
     parser.add_argument('--num-clip', type=int, help='Number of clip on each direction')
     parser.add_argument('--vmin', type=float, default=-1000)
     parser.add_argument('--vmax', type=float, default=600)
