@@ -183,13 +183,13 @@ class ParalClipMontagePlotNII(AbstractParallelRoutine):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--in-folder', type=str)
-    parser.add_argument('--out-folder', type=str)
-    parser.add_argument('--file-list-txt', type=str)
-    parser.add_argument('--num-clip', type=int)
-    parser.add_argument('--vmin', type=float)
-    parser.add_argument('--vmax', type=float)
-    parser.add_argument('--num-process', type=int, default=10)
+    parser.add_argument('--in-folder', type=str, help='Folder of NIFTI files')
+    parser.add_argument('--out-folder', type=str, help='Output folder')
+    parser.add_argument('--file-list-txt', type=str, help='List of filename in plain txt')
+    parser.add_argument('--num-clip', type=int, help='Number of clip on each direction')
+    parser.add_argument('--vmin', type=float, default=-1000)
+    parser.add_argument('--vmax', type=float, default=600)
+    parser.add_argument('--num-process', type=int, default=10, help='Number of cores')
     args = parser.parse_args()
 
     in_folder_obj = DataFolder(args.in_folder, args.file_list_txt)
