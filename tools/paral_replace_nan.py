@@ -32,6 +32,7 @@ class ParaReplaceNan(AbstractParallelRoutine):
         new_im_data = np.nan_to_num(im_data, nan=self._replace_val)
         im_obj.save_scan_same_space(out_path, new_im_data)
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--in-ori-folder', type=str)

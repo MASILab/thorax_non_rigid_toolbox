@@ -117,7 +117,7 @@ def _clip_image_location_triplanar(in_nii, in_mask, loc_vec, out_png):
 
     in_img = image_obj.get_data()
     mask_img = nib.load(in_mask).get_data()
-    mask_img = np.flip(mask_img, axis=1)
+    # mask_img = np.flip(mask_img, axis=1)
     pixdim = image_obj.header['pixdim'][1:4]
 
     dim_physical = np.multiply(np.array(in_img.shape), pixdim).astype(int)
@@ -197,7 +197,7 @@ def clip_connected_component_bb_center_with_mask(in_nii, in_mask, out_folder):
     in_img = ScanWrapper(in_nii).get_data()
     in_mask_img = ScanWrapper(in_mask).get_data()
 
-    in_mask_img = np.flip(in_mask_img, axis=1)
+    # in_mask_img = np.flip(in_mask_img, axis=1)
     connected_label, num_label = label(in_mask_img, return_num=True)
     props = regionprops(connected_label)
 
@@ -218,7 +218,7 @@ def multiple_clip_overlay_with_mask(in_nii, in_mask, out_png, dim_x=4, dim_y=4, 
     in_mask_img = ScanWrapper(in_mask).get_data()
 
     # Hot fix, need to revert the y dim.
-    in_mask_img = np.flip(in_mask_img, axis=1)
+    # in_mask_img = np.flip(in_mask_img, axis=1)
 
     clip_in_img_list = []
     clip_mask_img_list = []
@@ -398,7 +398,13 @@ def main():
 
     mkdir_p(out_png_folder)
 
+    first_n = 20
+
+    counter = 0
     for file_name in file_name_list:
+        if counter > first_n:
+            break
+
         in_nii = os.path.join(in_nii_folder, file_name)
         mask_nii = os.path.join(out_mask_nii_folder, file_name.replace('_ct.', '_seg.'))
         # out_png = os.path.join(out_png_folder, file_name.replace('.nii', '.png'))
@@ -416,6 +422,7 @@ def main():
         out_folder = os.path.join(out_png_folder, file_name)
         clip_connected_component_bb_center_with_mask(in_nii, mask_nii, out_folder)
 
+        counter += 1
 
 if __name__ == '__main__':
     main()

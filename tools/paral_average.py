@@ -1,11 +1,11 @@
 import argparse
-import numpy as np
-import nibabel as nib
-from data_io import DataFolder, ScanWrapper
 import os
+
+import numpy as np
+
+from data_io import DataFolder, ScanWrapper
 from paral import AbstractParallelRoutine
 from utils import get_logger, mkdir_p
-
 
 logger = get_logger('Average')
 
